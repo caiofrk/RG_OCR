@@ -1,0 +1,15 @@
+services:
+  # OCR Backend Service
+  - type: web
+    name: rg-ocr-backend
+    env: docker
+    region: ohio
+    plan: free
+    branch: main
+    dockerContext: services/ocr_service
+    dockerfilePath: services/ocr_service/Dockerfile
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: OCR_BASE_URL
+        value: "" 

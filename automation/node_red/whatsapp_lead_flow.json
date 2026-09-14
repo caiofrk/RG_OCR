@@ -1,0 +1,79 @@
+[
+  {
+    "id": "tab_document_ocr",
+    "type": "tab",
+    "label": "Document OCR Dispatcher",
+    "disabled": false,
+    "info": "Zero-Cost Document Ingest Flow for receiving identity documents (RG, CNH, Passports) via WhatsApp and dispatching to RG_OCR"
+  },
+  {
+    "id": "wa_inbound_doc",
+    "type": "whatsapp-in",
+    "z": "tab_document_ocr",
+    "name": "Incoming Document Image",
+    "client": "ocr_wa_client",
+    "x": 160,
+    "y": 120,
+    "wires": [["filter_media"]]
+  },
+  {
+    "id": "filter_media",
+    "type": "function",
+    "z": "tab_document_ocr",
+    "name": "Check Media",
+    "func": "if (msg.payload && (msg.payload.hasMedia || msg.payload.type === 'image' || msg.payload.type === 'document')) {\n  msg.fromPhone = msg.payload.from ? msg.payload.from.replace('@c.us', '') : '';\n  return msg;\n}\nreturn null;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 120,
+    "wires": [["dispatch_ocr"]]
+  },
+  {
+    "id": "dispatch_ocr",
+    "type": "http request",
+    "z": "tab_document_ocr",
+    "name": "RG_OCR Microservice",
+    "method": "POST",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "http://127.0.0.1:8000/api/v1/ocr/process-document",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 640,
+    "y": 120,
+    "wires": [["format_reply"]]
+  },
+  {
+    "id": "format_reply",
+    "type": "function",
+    "z": "tab_document_ocr",
+    "name": "Format OCR Result",
+    "func": "const data = msg.payload.extracted_data || {};\nlet reply = '📄 Documento (' + (data.document_type || 'ID').toUpperCase() + ') processado!\\n';\nif (data.full_name) reply += '👤 Nome: ' + data.full_name + '\\n';\nif (data.document_number) reply += '🔢 Número: ' + data.document_number + '\\n';\nif (data.cpf) reply += '🆔 CPF: ' + data.cpf + (data.cpf_valid ? ' (Válido)' : '') + '\\n';\nif (data.birth_date) reply += '🎂 Nascimento: ' + data.birth_date + '\\n';\nif (data.nationality) reply += '🌍 Nacionalidade: ' + data.nationality + '\\n';\n\nmsg.payload = {\n  to: msg.fromPhone + '@c.us',\n  body: reply\n};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 900,
+    "y": 120,
+    "wires": [["wa_outbound_reply"]]
+  },
+  {
+    "id": "wa_outbound_reply",
+    "type": "whatsapp-out",
+    "z": "tab_document_ocr",
+    "name": "Send Extracted Summary",
+    "client": "ocr_wa_client",
+    "x": 1150,
+    "y": 120,
+    "wires": []
+  }
+]

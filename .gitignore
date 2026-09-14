@@ -1,0 +1,42 @@
+# Environment and local configs
+.env
+.env.local
+*.local
+
+# Flutter / Dart
+apps/crm_app/.dart_tool/
+apps/crm_app/.flutter-plugins
+apps/crm_app/.flutter-plugins-dependencies
+apps/crm_app/.packages
+apps/crm_app/build/
+apps/crm_app/pubspec.lock
+apps/crm_app/ios/Pods/
+apps/crm_app/ios/.symlinks/
+apps/crm_app/android/.gradle/
+apps/crm_app/android/local.properties
+apps/crm_app/windows/flutter/ephemeral/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+services/ocr_service/venv/
+services/ocr_service/.venv/
+services/ocr_service/.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.bak
