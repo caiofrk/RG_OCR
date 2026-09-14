@@ -130,9 +130,9 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
         final picker = ImagePicker();
         final XFile? image = await picker.pickImage(
           source: isGalleryImport ? ImageSource.gallery : ImageSource.camera,
-          imageQuality: 70,
-          maxWidth: 1600,
-          maxHeight: 1600,
+          imageQuality: kIsWeb ? null : 70,
+          maxWidth: kIsWeb ? null : 1600,
+          maxHeight: kIsWeb ? null : 1600,
         );
         
         if (image != null) {
