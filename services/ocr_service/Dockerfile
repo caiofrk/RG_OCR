@@ -22,8 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the backend code
 COPY . /app
 
-# Pre-download the EasyOCR models (optional, but speeds up first request)
-RUN python -c "import easyocr; easyocr.Reader(['pt', 'en'], gpu=False)"
+
 
 # Expose port for Uvicorn
 EXPOSE 8000
