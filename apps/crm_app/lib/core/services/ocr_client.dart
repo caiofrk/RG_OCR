@@ -107,6 +107,7 @@ class OCRClientService {
     String docType = 'auto',
   }) async {
     final candidates = _getCandidates();
+    String lastError = "Erro desconhecido";
 
     for (final targetUrl in candidates) {
       final uri = Uri.parse('$targetUrl/api/v1/ocr/process-document');
@@ -123,7 +124,7 @@ class OCRClientService {
 
       try {
         final streamedResponse = await request.send().timeout(
-          const Duration(seconds: 35),
+          const Duration(seconds: 90),
           onTimeout: () {
             throw TimeoutException('Tempo limite excedido conectando a $targetUrl');
           },
@@ -145,6 +146,7 @@ class OCRClientService {
           );
         }
       } catch (e) {
+        lastError = e.toString();
         // Continue to try next candidate in list if connection refused / timeout
         continue;
       }
@@ -152,11 +154,10 @@ class OCRClientService {
 
     return OCRProcessResult(
       success: false,
-      message: 'Não foi possível conectar ao servidor OCR ($baseUrl).\n\n'
+      message: 'Não foi possível conectar ao servidor OCR ($baseUrl).\n'
+          'Erro original: $lastError\n\n'
           '💡 Dica:\n'
-          '1. Se estiver usando cabo USB, execute no PC:\n'
-          '   adb reverse tcp:8000 tcp:8000\n'
-          '2. Se estiver via Wi-Fi, toque no ícone de rede (topo) e teste a conexão com http://192.168.0.3:8000.',
+          'Se a sua internet móvel for lenta, o upload da foto pode estar excedendo o tempo limite.',
       processingTimeMs: 0,
     );
   }
