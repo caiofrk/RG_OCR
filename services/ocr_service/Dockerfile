@@ -10,8 +10,6 @@ WORKDIR /app
 # Install system dependencies required for OpenCV, Tesseract, and PyMuPDF
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
     tesseract-ocr \
     tesseract-ocr-por \
     tesseract-ocr-eng \
