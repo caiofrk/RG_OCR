@@ -16,11 +16,8 @@ class AppConstants {
     const envUrl = String.fromEnvironment('OCR_BASE_URL', defaultValue: '');
     if (envUrl.isNotEmpty) return envUrl;
     
-    // Dynamically detect the host if running on Web and not on localhost
-    if (Uri.base.host.isNotEmpty && Uri.base.host != '127.0.0.1') {
-      return 'http://${Uri.base.host}:8000';
-    }
-    return 'http://127.0.0.1:8000';
+    // Default to the live Render backend for web deployments
+    return 'https://rg-ocr-backend.onrender.com';
   }
 
   // Storage Buckets
