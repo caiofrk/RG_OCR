@@ -1,6 +1,6 @@
 import io
 import shutil
-import fitz  # PyMuPDF
+import pymupdf as fitz  # PyMuPDF
 from PIL import Image
 from .preprocessing import ImagePreprocessor
 from .parser import MultiDocumentParser
