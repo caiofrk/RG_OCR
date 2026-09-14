@@ -23,15 +23,8 @@ class OCREngine:
                 self.has_tesseract = False
 
     def _get_easyocr_reader(self):
-        """Lazy loader for EasyOCR model to save startup memory."""
-        if self.easyocr_reader is None:
-            try:
-                import easyocr
-                self.easyocr_reader = easyocr.Reader(["pt", "en"], gpu=False, verbose=False)
-            except Exception as e:
-                print(f"[!] Warning: EasyOCR could not be loaded: {e}")
-                self.easyocr_reader = None
-        return self.easyocr_reader
+        """Disabled by default to prevent OOM on 512MB RAM free-tiers."""
+        return None
 
     def extract_from_pdf(self, pdf_bytes: bytes) -> str:
         """Extracts text from PDF using PyMuPDF (fitz) - lightning fast & free."""
