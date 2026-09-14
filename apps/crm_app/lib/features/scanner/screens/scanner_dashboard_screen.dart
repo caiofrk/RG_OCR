@@ -136,6 +136,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
         );
         
         if (image != null) {
+          setState(() => _isProcessing = true);
           final path = image.path;
           final bytes = await image.readAsBytes();
           
@@ -222,6 +223,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
       );
 
       if (picked.isNotEmpty) {
+        setState(() => _isProcessing = true);
         final file = picked.first;
         final bytes = await file.readAsBytes();
         setState(() {
