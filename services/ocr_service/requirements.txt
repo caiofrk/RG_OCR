@@ -8,3 +8,4 @@ numpy>=1.26.0
 PyMuPDF>=1.23.0
 pytesseract>=0.3.10
 pytest>=8.0.0
+easyocr>=1.7.0
