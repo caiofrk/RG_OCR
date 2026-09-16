@@ -188,22 +188,48 @@ class ICAO9303MRZParser:
     def find_and_parse_mrz(cls, raw_text: str) -> Optional[Dict[str, Any]]:
         """
         Scans any OCR text output to locate candidate MRZ lines and parses them.
+        Sorts lines intelligently to handle out-of-order or duplicate lines from multiple OCR passes.
         """
-        lines = [line.strip().replace(" ", "") for line in raw_text.split('\n')]
-        # Filter lines with typical MRZ characters (letters, numbers, '<')
+        # Tesseract often reads '<' as 'K', 'C', or '('. Normalize them aggressively for MRZ candidate matching.
+        cleaned_text = re.sub(r'[KkCc\(\)\[\]\{}]', '<', raw_text.upper())
+        lines = [line.strip().replace(" ", "") for line in cleaned_text.split('\n')]
+        
         mrz_candidates = [
             l for l in lines 
             if len(l) >= 28 and sum(1 for c in l if c == '<') >= 3
         ]
+        
+        # Remove duplicates while preserving order
+        unique_candidates = list(dict.fromkeys(mrz_candidates))
 
         # Check for TD3 (2 lines x 44)
-        td3_lines = [l for l in mrz_candidates if 40 <= len(l) <= 46]
+        td3_lines = [l for l in unique_candidates if 40 <= len(l) <= 46]
         if len(td3_lines) >= 2:
-            return cls.parse_td3(td3_lines[-2], td3_lines[-1])
+            # Line 1 always starts with P, V, A, C, or I and contains country code.
+            # It usually has '<<' for name separation.
+            line1_candidates = [l for l in td3_lines if l.startswith(('P', 'V', 'A', 'C', 'I')) or '<<' in l[:20]]
+            line2_candidates = [l for l in td3_lines if l not in line1_candidates]
+            
+            if line1_candidates and line2_candidates:
+                return cls.parse_td3(line1_candidates[0], line2_candidates[0])
+            elif len(td3_lines) >= 2:
+                # Fallback if detection fails, just use the last two and hope for the best
+                return cls.parse_td3(td3_lines[-2], td3_lines[-1])
 
         # Check for TD1 (3 lines x 30)
-        td1_lines = [l for l in mrz_candidates if 28 <= len(l) <= 34]
+        td1_lines = [l for l in unique_candidates if 28 <= len(l) <= 34]
         if len(td1_lines) >= 3:
+            # Line 1 starts with I, A, C and has country code
+            line1_candidates = [l for l in td1_lines if l.startswith(('I', 'A', 'C')) and '<' in l[:5]]
+            # Line 3 contains '<<' for name separation
+            line3_candidates = [l for l in td1_lines if '<<' in l and l not in line1_candidates]
+            
+            if line1_candidates and line3_candidates:
+                line2_candidates = [l for l in td1_lines if l not in line1_candidates and l not in line3_candidates]
+                if line2_candidates:
+                    return cls.parse_td1(line1_candidates[0], line2_candidates[0], line3_candidates[0])
+            
+            # Fallback
             return cls.parse_td1(td1_lines[-3], td1_lines[-2], td1_lines[-1])
 
         return None
