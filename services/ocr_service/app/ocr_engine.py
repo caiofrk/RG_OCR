@@ -57,7 +57,9 @@ class OCREngine:
         # 2. Secondary Engine: Tesseract (if installed)
         if self.has_tesseract:
             try:
-                text = self.pytesseract.image_to_string(binary, lang="por+eng")
+                text_enhanced = self.pytesseract.image_to_string(enhanced, lang="por+eng")
+                text_binary = self.pytesseract.image_to_string(binary, lang="por+eng")
+                text = text_enhanced + "\n" + text_binary
                 if text.strip():
                     return text
             except Exception:

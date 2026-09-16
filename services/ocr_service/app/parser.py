@@ -89,7 +89,8 @@ class MultiDocumentParser:
 
     @classmethod
     def extract_cpf(cls, text: str) -> tuple[Optional[str], bool]:
-        matches = re.findall(r"\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b", text)
+        # Match CPF even if Tesseract reads dots as spaces or commas
+        matches = re.findall(r"\b\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{2}\b", text)
         for candidate in matches:
             cleaned = re.sub(r"\D", "", candidate)
             if cls.validate_cpf(cleaned):
@@ -100,7 +101,8 @@ class MultiDocumentParser:
 
     @classmethod
     def extract_rg(cls, text: str) -> Optional[str]:
-        rg_regex = r"\b(?<!\d)(\d{1,2}\.?\d{3}\.?\d{3}[- ]?[0-9xX])\b"
+        # Match RG even if Tesseract reads dots as spaces
+        rg_regex = r"\b(?<!\d)(\d{1,2}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*[0-9xX])\b"
         matches = re.findall(rg_regex, text)
         for m in matches:
             digits_only = re.sub(r"\D", "", m)
@@ -110,7 +112,7 @@ class MultiDocumentParser:
 
     @classmethod
     def extract_dates(cls, text: str) -> List[str]:
-        raw_matches = re.findall(r"\b(0[1-9]|[12][0-9]|3[01])[\/.-](0[1-9]|1[012])[\/.-]((?:19|20)\d{2})\b", text)
+        raw_matches = re.findall(r"\b(0[1-9]|[12][0-9]|3[01])[\/.\-,\s](0[1-9]|1[012])[\/.\-,\s]((?:19|20)\d{2})\b", text)
         dates = [f"{d[0]}/{d[1]}/{d[2]}" for d in raw_matches]
         return list(dict.fromkeys(dates))
 
@@ -203,7 +205,9 @@ class MultiDocumentParser:
         if not full_name:
             candidates = []
             for line in lines:
-                words = [w for w in line.split() if re.match(r"^[A-Za-zÀ-ÿ]{2,}$", w)]
+                # Strip punctuation before checking if it's a word
+                clean_line_words = [re.sub(r"[^\wÀ-ÿ]", "", w) for w in line.split()]
+                words = [w for w in clean_line_words if len(w) >= 2 and not any(c.isdigit() for c in w)]
                 if 2 <= len(words) <= 5:
                     upper_words = [cls.normalize_accents(w) for w in words]
                     if not set(upper_words).intersection(STOPWORDS_DOC):
