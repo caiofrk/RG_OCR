@@ -83,7 +83,10 @@ class OCRClientService {
   Future<bool> testConnection([String? testUrl]) async {
     try {
       final target = (testUrl ?? baseUrl).trim().replaceAll(RegExp(r'/+$'), '');
-      final res = await http.get(Uri.parse('$target/health')).timeout(const Duration(seconds: 4));
+      final res = await http.get(
+        Uri.parse('$target/health'),
+        headers: {'ngrok-skip-browser-warning': 'true'},
+      ).timeout(const Duration(seconds: 4));
       return res.statusCode == 200;
     } catch (_) {
       return false;
@@ -112,6 +115,7 @@ class OCRClientService {
     for (final targetUrl in candidates) {
       final uri = Uri.parse('$targetUrl/api/v1/ocr/process-document');
       final request = http.MultipartRequest('POST', uri);
+      request.headers['ngrok-skip-browser-warning'] = 'true';
 
       request.fields['doc_type'] = docType;
       request.files.add(
@@ -179,7 +183,10 @@ class OCRClientService {
 
         final response = await http.post(
           uri,
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
           body: body,
         ).timeout(const Duration(seconds: 10));
 
@@ -211,7 +218,10 @@ class OCRClientService {
         }
 
         final uri = Uri.parse('$targetUrl/api/v1/documents').replace(queryParameters: queryParams);
-        final response = await http.get(uri).timeout(const Duration(seconds: 10));
+        final response = await http.get(
+          uri,
+          headers: {'ngrok-skip-browser-warning': 'true'},
+        ).timeout(const Duration(seconds: 10));
 
         if (response.statusCode >= 200 && response.statusCode < 300) {
           if (targetUrl != baseUrl) baseUrl = targetUrl;
@@ -234,7 +244,10 @@ class OCRClientService {
     for (final targetUrl in _getCandidates()) {
       try {
         final uri = Uri.parse('$targetUrl/api/v1/documents/$docId');
-        final response = await http.delete(uri).timeout(const Duration(seconds: 8));
+        final response = await http.delete(
+          uri,
+          headers: {'ngrok-skip-browser-warning': 'true'},
+        ).timeout(const Duration(seconds: 8));
         if (response.statusCode >= 200 && response.statusCode < 300) {
           if (targetUrl != baseUrl) baseUrl = targetUrl;
           return true;
