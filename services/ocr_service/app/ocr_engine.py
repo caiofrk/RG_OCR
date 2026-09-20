@@ -67,8 +67,8 @@ class OCREngine:
                     text = "\n".join(lines)
                     text_upper = text.upper()
                     
-                    # Stop early if we find a strong anchor indicating correct orientation
-                    if any(anchor in text_upper for anchor in anchors):
+                    # Stop early if we find at least 2 strong anchors indicating correct orientation
+                    if sum(anchor in text_upper for anchor in anchors) >= 2:
                         return text
                         
                     char_count = len(text.replace(" ", "").replace("\n", ""))

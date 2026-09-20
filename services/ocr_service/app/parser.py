@@ -115,13 +115,13 @@ class MultiDocumentParser:
             if cls._is_fuzzy_match("CPF", cls.normalize_accents(line)):
                 # Search the current line and up to 3 lines ahead
                 for j in range(i, min(i + 4, len(lines))):
-                    match = re.search(r"(\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{2})", lines[j])
+                    match = re.search(r"(\d{3}[\.\s,\-=]*\d{3}[\.\s,\-=]*\d{3}[\.\s,\-=]*\d{2})", lines[j])
                     if match:
                         cleaned = re.sub(r"\D", "", match.group(1))
                         return cls.format_cpf(cleaned), cls.validate_cpf(cleaned)
                         
         # 2. Fallback to general valid CPF match
-        matches = re.findall(r"\b\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{2}\b", text)
+        matches = re.findall(r"\b\d{3}[\.\s,\-=]*\d{3}[\.\s,\-=]*\d{3}[\.\s,\-=]*\d{2}\b", text)
         for candidate in matches:
             cleaned = re.sub(r"\D", "", candidate)
             if cls.validate_cpf(cleaned):
@@ -175,17 +175,27 @@ class MultiDocumentParser:
         
         # Anchored Category
         category = None
-        cat_match = re.search(r"(?:CATEGORIA|CAT\.?\s*HAB\.?|CAT).*?\b([A-E]{1,2}|ACC)\b", norm_text)
+        cat_match = re.search(r"(?:CATEGORIA|CAT\.?\s*HAB\.?|CAT|CI\s*HAB).*?\b([A-E]{1,2}|ACC)\b", norm_text)
         if cat_match:
             category = cat_match.group(1).strip()
         else:
             # Fallback: look for isolated valid category on a short line (OCR might miss "CAT. HAB.")
             lines = [l.strip() for l in text.splitlines() if l.strip()]
-            for l in lines:
+            valid_cats = ["A", "B", "AB", "C", "D", "E", "ACC"]
+            for i, l in enumerate(lines):
                 l_norm = cls.normalize_accents(l)
-                if l_norm in ["A", "B", "AB", "C", "D", "E"]:
+                if l_norm in valid_cats:
                     category = l_norm
                     break
+                # Special fallback for old CNH: check if "PERMISSAO", "ACC", or "CI HAB" are nearby
+                if "PERMISSAO" in l_norm or "ACC" in l_norm or "CI HAB" in l_norm:
+                    # check next few lines for A, B, AB, ACC
+                    for j in range(i, min(i + 4, len(lines))):
+                        if lines[j].strip().upper() in valid_cats:
+                            category = lines[j].strip().upper()
+                            break
+                    if category:
+                        break
 
         # Anchored RENACH
         renach = None
@@ -197,16 +207,22 @@ class MultiDocumentParser:
 
         # Anchored Registration Number
         reg_num = None
-        reg_match = re.search(r"(?:REGISTRO|N[OA]?\s*REGISTRO)[^\d]*(\d{9,11})", norm_text)
+        reg_match = re.search(r"(?:REGISTRO|N[OA]?\s*REGISTRO)[^\d]*([0-9O]{9,11})", norm_text)
         if reg_match:
-            reg_num = reg_match.group(1)
+            reg_num = reg_match.group(1).replace("O", "0")
         else:
             all_11 = re.findall(r"\b(\d{11})\b", norm_text)
             cpf_digits = re.sub(r"\D", "", cls.extract_cpf(text)[0] or "")
             for num in all_11:
-                if num != cpf_digits:
+                if num != cpf_digits and num.startswith("00"):
                     reg_num = num
                     break
+            
+            if not reg_num:
+                for num in all_11:
+                    if num != cpf_digits:
+                        reg_num = num
+                        break
 
         return {
             "category": category,
@@ -318,7 +334,7 @@ class MultiDocumentParser:
 
             return ExtractedDocumentData(
                 document_type="cnh",
-                document_number=cls.extract_rg(raw_text),
+                document_number=cnh_info.get("registration") or cls.extract_rg(raw_text),
                 cpf=cpf,
                 cpf_valid=cpf_valid,
                 full_name=full_name,
