@@ -31,6 +31,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
   bool _isSavingDocument = false;
   bool _wasProcessedLocally = false;
   String _selectedDocType = 'auto';
+  int _imageRotation = 0;
 
   // Field text controllers
   late TextEditingController _nameController;
@@ -123,6 +124,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
             _fileBytes = bytes;
             _fileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.jpg';
             _filePath = path;
+            _imageRotation = 0;
           });
           await _processOCR();
         }
@@ -144,6 +146,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
             _fileBytes = bytes;
             _fileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.jpg';
             _filePath = path;
+            _imageRotation = 0;
           });
           await _processOCR();
         }
@@ -230,6 +233,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
           _fileBytes = bytes;
           _fileName = file.name;
           _filePath = file.path;
+          _imageRotation = 0;
         });
         await _processOCR();
       }
@@ -659,9 +663,29 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
                           Positioned.fill(
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(10),
-                              child: Image.memory(
-                                _fileBytes!,
-                                fit: BoxFit.contain,
+                              child: RotatedBox(
+                                quarterTurns: _imageRotation,
+                                child: Image.memory(
+                                  _fileBytes!,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 8,
+                            right: 8,
+                            child: Material(
+                              color: AppTheme.slate900.withValues(alpha: 0.8),
+                              borderRadius: BorderRadius.circular(30),
+                              child: IconButton(
+                                icon: const Icon(Icons.rotate_90_degrees_ccw, color: Colors.white),
+                                tooltip: 'Girar Imagem',
+                                onPressed: () {
+                                  setState(() {
+                                    _imageRotation = (_imageRotation + 1) % 4;
+                                  });
+                                },
                               ),
                             ),
                           ),

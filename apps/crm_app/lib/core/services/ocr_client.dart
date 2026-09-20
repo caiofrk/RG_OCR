@@ -94,9 +94,13 @@ class OCRClientService {
 
   List<String> _getCandidates() {
     final list = <String>[baseUrl];
-    for (final cand in ['http://127.0.0.1:8000', 'http://192.168.0.3:8000', 'http://10.0.2.2:8000']) {
-      if (!list.contains(cand)) {
-        list.add(cand);
+    
+    // Only append fallbacks if the user is using a default/local URL
+    if (baseUrl.contains('127.0.0.1') || baseUrl.contains('10.0.2.2') || baseUrl.contains('192.168.0')) {
+      for (final cand in ['http://127.0.0.1:8000', 'http://192.168.0.3:8000', 'http://10.0.2.2:8000']) {
+        if (!list.contains(cand)) {
+          list.add(cand);
+        }
       }
     }
     return list;
@@ -149,7 +153,10 @@ class OCRClientService {
           );
         }
       } catch (e) {
-        lastError = e.toString();
+        // Keep the error from the primary URL instead of overwriting it with fallback errors
+        if (lastError == "Erro desconhecido") {
+          lastError = e.toString();
+        }
         // Continue to try next candidate in list if connection refused / timeout
         continue;
       }
