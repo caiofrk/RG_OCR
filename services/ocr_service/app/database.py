@@ -122,8 +122,8 @@ class LocalDatabaseService:
                     raw_ocr_text, extracted_payload, created_at, updated_at
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?,
                     ?, ?, ?, ?,
                     ?, ?, ?, ?,
                     ?, ?, ?,

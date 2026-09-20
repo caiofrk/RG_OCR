@@ -1,5 +1,6 @@
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+import re
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 class ExtractedDocumentData(BaseModel):
     document_type: str = Field(default="rg", description="Document type: rg, cnh, passport, cin, or cpf")
@@ -30,6 +31,68 @@ class ExtractedDocumentData(BaseModel):
     mrz_valid: bool = Field(default=False, description="Whether ICAO 9303 check digits passed")
     
     confidence_score: float = Field(default=0.0, description="Overall confidence score from 0.0 to 1.0")
+
+    @field_validator("birth_date", "issuing_date", "expiry_date", "cnh_first_license_date", mode="before")
+    def validate_dates(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        # Silently return None if it doesn't match a strict DD/MM/YYYY format
+        if not re.match(r"^(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[012])/(19|20)\d\d$", str(v).strip()):
+            return None
+        return str(v).strip()
+
+    @field_validator("cpf", mode="before")
+    def validate_cpf_format(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        if not re.match(r"^\d{3}\.\d{3}\.\d{3}\-\d{2}$", str(v).strip()):
+            return None
+        return str(v).strip()
+
+    @field_validator("full_name", "surname", "given_names", mode="before")
+    def validate_names(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        return str(v).strip().title()
+
+    @field_validator("issuing_organ", mode="before")
+    def validate_issuing_organ(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        return str(v).strip().upper()
+
+    @field_validator("issuing_state", mode="before")
+    def validate_state(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        state = str(v).strip().upper()
+        valid_states = {
+            "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA",
+            "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN",
+            "RS", "RO", "RR", "SC", "SP", "SE", "TO"
+        }
+        return state if state in valid_states else None
+
+    @field_validator("gender", mode="before")
+    def validate_gender(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        g = str(v).strip().upper()
+        if g in ["M", "MASCULINO", "MASC"]:
+            return "M"
+        if g in ["F", "FEMININO", "FEM"]:
+            return "F"
+        if g in ["X", "OUTRO", "OUTROS"]:
+            return "X"
+        return None
+
+    @field_validator("cnh_category", mode="before")
+    def validate_cnh_category(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        cat = str(v).strip().upper()
+        valid_cats = {"A", "B", "AB", "C", "D", "E", "ACC"}
+        return cat if cat in valid_cats else None
 
 class OCRProcessResponse(BaseModel):
     success: bool

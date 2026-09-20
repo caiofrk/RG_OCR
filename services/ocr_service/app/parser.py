@@ -2,6 +2,7 @@ import re
 import unicodedata
 import hashlib
 from typing import Optional, Dict, Any, List
+from thefuzz import fuzz
 from .schemas import ExtractedDocumentData
 from .mrz_parser import ICAO9303MRZParser
 
@@ -41,6 +42,23 @@ class MultiDocumentParser:
             return ""
         nfd = unicodedata.normalize("NFD", text)
         return "".join(c for c in nfd if unicodedata.category(c) != "Mn").upper()
+
+    @staticmethod
+    def _is_fuzzy_match(keyword: str, text: str, threshold: int = 85) -> bool:
+        """Returns True if keyword is found in text using fuzzy matching."""
+        if not text or not keyword:
+            return False
+        # If the exact keyword is already in the string, return True immediately
+        if keyword in text:
+            return True
+            
+        # Split text into words and check if any word (or combination of words) matches the keyword
+        words = text.split()
+        if not words:
+            return False
+            
+        # Compare against the whole string (partial_ratio is good for "NOME" in "N0ME DO PAI")
+        return fuzz.partial_ratio(keyword, text) >= threshold
 
     @staticmethod
     def validate_cpf(raw_cpf: str) -> bool:
@@ -91,13 +109,18 @@ class MultiDocumentParser:
 
     @classmethod
     def extract_cpf(cls, text: str) -> tuple[Optional[str], bool]:
-        # Keyword anchored search for CPF
-        cpf_keyword_match = re.search(r"CPF[\s:.\-]*(\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{2})", text, re.IGNORECASE)
-        if cpf_keyword_match:
-             cleaned = re.sub(r"\D", "", cpf_keyword_match.group(1))
-             return cls.format_cpf(cleaned), cls.validate_cpf(cleaned)
-             
-        # Fallback to general valid CPF match
+        # 1. Line-Sweeping Anchored Search for CPF
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        for i, line in enumerate(lines):
+            if cls._is_fuzzy_match("CPF", cls.normalize_accents(line)):
+                # Search the current line and up to 3 lines ahead
+                for j in range(i, min(i + 4, len(lines))):
+                    match = re.search(r"(\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{2})", lines[j])
+                    if match:
+                        cleaned = re.sub(r"\D", "", match.group(1))
+                        return cls.format_cpf(cleaned), cls.validate_cpf(cleaned)
+                        
+        # 2. Fallback to general valid CPF match
         matches = re.findall(r"\b\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{3}[\.\s,-]*\d{2}\b", text)
         for candidate in matches:
             cleaned = re.sub(r"\D", "", candidate)
@@ -193,7 +216,7 @@ class MultiDocumentParser:
 
         # Anchored NOME
         for i, nl in enumerate(norm_lines):
-            if nl == "NOME" or nl.startswith("NOME:"):
+            if cls._is_fuzzy_match("NOME", nl) or cls._is_fuzzy_match("NOME:", nl):
                 name_parts = []
                 for j in range(i + 1, min(i + 6, len(norm_lines))):
                     line_norm = norm_lines[j]
@@ -227,9 +250,9 @@ class MultiDocumentParser:
         norm = cls.normalize_accents(raw_text)
         if "P<" in norm or re.search(r"[A-Z0-9<]{40,46}", norm): return "passport"
         cnh_markers = ["HABILITACAO", "CARTEIRA NACIONAL", "DETRAN", "RENACH", "CATEGORIA HAB", "CONTRAN", "PERMISSAO", "REGISTRO", "ACC"]
-        matches = sum(1 for m in cnh_markers if m in norm)
-        if matches >= 2 or "HABILITACAO" in norm or "CARTEIRA NACIONAL" in norm: return "cnh"
-        if "IDENTIDADE NACIONAL" in norm or "CIN" in norm: return "cin"
+        matches = sum(1 for m in cnh_markers if cls._is_fuzzy_match(m, norm))
+        if matches >= 2 or cls._is_fuzzy_match("HABILITACAO", norm) or cls._is_fuzzy_match("CARTEIRA NACIONAL", norm): return "cnh"
+        if cls._is_fuzzy_match("IDENTIDADE NACIONAL", norm) or cls._is_fuzzy_match("CIN", norm): return "cin"
         return "rg"
 
     @classmethod

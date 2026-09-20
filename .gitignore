@@ -43,4 +43,6 @@ Thumbs.db
 
 # Local Data and Scans
 services/ocr_service/data/
-
+*.db
+*.sqlite
+*.sqlite3
