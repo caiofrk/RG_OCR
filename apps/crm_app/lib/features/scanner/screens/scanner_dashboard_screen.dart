@@ -40,6 +40,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
   late TextEditingController _userIdController;
   late TextEditingController _organController;
   late TextEditingController _nationalityController;
+  late TextEditingController _genderController;
   late TextEditingController _expiryController;
   late TextEditingController _cnhCatController;
   late TextEditingController _cnhRenachController;
@@ -54,6 +55,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
     _userIdController = TextEditingController();
     _organController = TextEditingController();
     _nationalityController = TextEditingController();
+    _genderController = TextEditingController();
     _expiryController = TextEditingController();
     _cnhCatController = TextEditingController();
     _cnhRenachController = TextEditingController();
@@ -68,6 +70,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
     _userIdController.dispose();
     _organController.dispose();
     _nationalityController.dispose();
+    _genderController.dispose();
     _expiryController.dispose();
     _cnhCatController.dispose();
     _cnhRenachController.dispose();
@@ -82,6 +85,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
     _userIdController.text = doc.userId ?? '';
     _organController.text = '${doc.issuingOrgan ?? ''}${doc.issuingState != null ? '/${doc.issuingState}' : ''}'.trim();
     _nationalityController.text = doc.nationality ?? '';
+    _genderController.text = doc.gender ?? '';
     _expiryController.text = doc.expiryDate ?? '';
     _cnhCatController.text = doc.cnhCategory ?? '';
     _cnhRenachController.text = doc.cnhRenach ?? '';
@@ -884,6 +888,13 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextField(
+                              controller: _genderController,
+                              decoration: const InputDecoration(labelText: 'Sexo', prefixIcon: Icon(Icons.wc)),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
                               controller: _organController,
                               decoration: const InputDecoration(labelText: 'Órgão / UF', prefixIcon: Icon(Icons.apartment)),
                             ),
@@ -967,6 +978,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
                           cnhCategory: _cnhCatController.text.trim(),
                           cnhRenach: _cnhRenachController.text.trim(),
                           nationality: _nationalityController.text.trim(),
+                          gender: _genderController.text.trim(),
                           expiryDate: _expiryController.text.trim(),
                         );
 

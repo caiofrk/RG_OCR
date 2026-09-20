@@ -178,8 +178,14 @@ class MultiDocumentParser:
         cat_match = re.search(r"(?:CATEGORIA|CAT\.?\s*HAB\.?|CAT).*?\b([A-E]{1,2}|ACC)\b", norm_text)
         if cat_match:
             category = cat_match.group(1).strip()
-        elif "ACC" in norm_text:
-            category = "ACC"
+        else:
+            # Fallback: look for isolated valid category on a short line (OCR might miss "CAT. HAB.")
+            lines = [l.strip() for l in text.splitlines() if l.strip()]
+            for l in lines:
+                l_norm = cls.normalize_accents(l)
+                if l_norm in ["A", "B", "AB", "C", "D", "E"]:
+                    category = l_norm
+                    break
 
         # Anchored RENACH
         renach = None
@@ -216,14 +222,19 @@ class MultiDocumentParser:
 
         # Anchored NOME
         for i, nl in enumerate(norm_lines):
-            if cls._is_fuzzy_match("NOME", nl) or cls._is_fuzzy_match("NOME:", nl):
+            if cls._is_fuzzy_match("NOME", nl) or cls._is_fuzzy_match("NOME:", nl) or cls._is_fuzzy_match("NOMF", nl):
                 name_parts = []
                 for j in range(i + 1, min(i + 6, len(norm_lines))):
                     line_norm = norm_lines[j]
-                    if any(w in line_norm for w in ["DOC", "IDENTIDADE", "CPF", "DATA", "NASCIMENTO", "FILIACAO", "RG"]):
+                    if any(w in line_norm for w in ["DOC", "IDENTIDADE", "CPF", "DATA", "NASCIMENTO", "FILIACAO", "RG", "LOCAL"]):
                         break
-                    clean_words = [w for w in lines[j].split() if re.match(r"^[A-Za-zÀ-ÿ]{2,}$", w)]
-                    if clean_words and not any(w.upper() in STOPWORDS_DOC for w in clean_words):
+                        
+                    # New CNH: "SOBRENOME" and "NOME SOCIAL" are labels that appear in the middle of the name lines
+                    for label in ["SOBRENOME", "NOME SOCIAL", "NOVE SOCIAL"]:
+                        line_norm = line_norm.replace(label, "")
+                        
+                    clean_words = [w for w in line_norm.split() if re.match(r"^[A-Z]{2,}$", w)]
+                    if clean_words and not any(w in STOPWORDS_DOC for w in clean_words):
                         name_parts.extend(clean_words)
                 if name_parts:
                     full_name = " ".join(name_parts).title()

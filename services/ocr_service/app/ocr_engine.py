@@ -47,23 +47,48 @@ class OCREngine:
     def extract_from_image(self, image_bytes: bytes) -> str:
         """
         Processes image through OpenCV preprocessing pipeline and runs OCR extraction.
-        Prioritizes EasyOCR (PyTorch local model) with fallback to Tesseract.
+        Implements Auto-Rotation by checking 4 orientations (0, 90, 180, 270) with EasyOCR.
         """
         enhanced, binary = ImagePreprocessor.process_pipeline(image_bytes)
 
         # 1. Primary Engine: EasyOCR (zero-cost, embedded local model)
         reader = self._get_easyocr_reader()
         if reader is not None:
-            try:
-                lines = reader.readtext(enhanced, detail=0, paragraph=False)
-                if lines:
-                    return "\n".join(lines)
-            except Exception as e:
-                print(f"[!] EasyOCR execution failed, falling back: {e}")
+            best_text = ""
+            best_char_count = 0
+            current_img = enhanced
+            
+            # Key anchors that confidently tell us the document is correctly oriented
+            anchors = {"CPF", "NOME", "BRASIL", "REPUBLICA", "CARTEIRA", "IDENTIDADE", "REGISTRO", "DETRAN"}
+            
+            for _ in range(4):
+                try:
+                    lines = reader.readtext(current_img, detail=0, paragraph=False)
+                    text = "\n".join(lines)
+                    text_upper = text.upper()
+                    
+                    # Stop early if we find a strong anchor indicating correct orientation
+                    if any(anchor in text_upper for anchor in anchors):
+                        return text
+                        
+                    char_count = len(text.replace(" ", "").replace("\n", ""))
+                    if char_count > best_char_count:
+                        best_char_count = char_count
+                        best_text = text
+                        
+                except Exception as e:
+                    print(f"[!] EasyOCR execution failed during rotation check: {e}")
+                    
+                # Rotate 90 degrees clockwise for next attempt
+                current_img = cv2.rotate(current_img, cv2.ROTATE_90_CLOCKWISE)
+                
+            if best_text.strip():
+                return best_text
 
-        # 2. Secondary Engine: Tesseract (if installed)
+        # 2. Secondary Engine: Tesseract (Fallback if EasyOCR is completely broken/unavailable)
         if self.has_tesseract:
             try:
+                # Basic tesseract run without auto-rotation to save time on fallback
                 text_enhanced = self.pytesseract.image_to_string(enhanced, lang="por+eng")
                 text_binary = self.pytesseract.image_to_string(binary, lang="por+eng")
                 text = text_enhanced + "\n" + text_binary
