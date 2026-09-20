@@ -39,9 +39,8 @@ def init_db():
                 cpf TEXT,
                 cpf_valid INTEGER DEFAULT 0,
                 full_name TEXT,
+                user_id TEXT,
                 birth_date TEXT,
-                mother_name TEXT,
-                father_name TEXT,
                 naturalness TEXT,
                 nationality TEXT,
                 gender TEXT,
@@ -115,8 +114,8 @@ class LocalDatabaseService:
             cursor.execute("""
                 INSERT INTO scanned_documents (
                     id, file_name, file_path, file_size_bytes, document_type, status,
-                    document_number, cpf, cpf_valid, full_name, birth_date,
-                    mother_name, father_name, naturalness, nationality, gender,
+                    document_number, cpf, cpf_valid, full_name, user_id, birth_date,
+                    naturalness, nationality, gender,
                     issuing_organ, issuing_state, issuing_country, issuing_date,
                     expiry_date, cnh_category, cnh_renach, cnh_first_license_date,
                     passport_mrz_lines, passport_mrz_valid, confidence_score,
@@ -141,9 +140,8 @@ class LocalDatabaseService:
                 extracted_data.get("cpf"),
                 1 if extracted_data.get("cpf_valid") else 0,
                 extracted_data.get("full_name"),
+                extracted_data.get("user_id"),
                 extracted_data.get("birth_date"),
-                extracted_data.get("mother_name"),
-                extracted_data.get("father_name"),
                 extracted_data.get("naturalness"),
                 extracted_data.get("nationality"),
                 extracted_data.get("gender"),
@@ -183,7 +181,7 @@ class LocalDatabaseService:
 
             if search:
                 pattern = f"%{search.strip()}%"
-                conditions.append("(full_name LIKE ? OR document_number LIKE ? OR cpf LIKE ? OR mother_name LIKE ?)")
+                conditions.append("(full_name LIKE ? OR document_number LIKE ? OR cpf LIKE ? OR user_id LIKE ?)")
                 params.extend([pattern, pattern, pattern, pattern])
 
             if doc_type and doc_type != "auto":

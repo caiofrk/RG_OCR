@@ -40,3 +40,7 @@ Thumbs.db
 .idea/
 *.swp
 *.bak
+
+# Local Data and Scans
+services/ocr_service/data/
+

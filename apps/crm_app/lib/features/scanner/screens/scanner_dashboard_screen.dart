@@ -37,8 +37,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
   late TextEditingController _docNumberController;
   late TextEditingController _cpfController;
   late TextEditingController _birthDateController;
-  late TextEditingController _motherController;
-  late TextEditingController _fatherController;
+  late TextEditingController _userIdController;
   late TextEditingController _organController;
   late TextEditingController _nationalityController;
   late TextEditingController _expiryController;
@@ -52,8 +51,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
     _docNumberController = TextEditingController();
     _cpfController = TextEditingController();
     _birthDateController = TextEditingController();
-    _motherController = TextEditingController();
-    _fatherController = TextEditingController();
+    _userIdController = TextEditingController();
     _organController = TextEditingController();
     _nationalityController = TextEditingController();
     _expiryController = TextEditingController();
@@ -67,8 +65,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
     _docNumberController.dispose();
     _cpfController.dispose();
     _birthDateController.dispose();
-    _motherController.dispose();
-    _fatherController.dispose();
+    _userIdController.dispose();
     _organController.dispose();
     _nationalityController.dispose();
     _expiryController.dispose();
@@ -82,8 +79,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
     _docNumberController.text = doc.documentNumber ?? '';
     _cpfController.text = doc.cpf ?? '';
     _birthDateController.text = doc.birthDate ?? '';
-    _motherController.text = doc.motherName ?? '';
-    _fatherController.text = doc.fatherName ?? '';
+    _userIdController.text = doc.userId ?? '';
     _organController.text = '${doc.issuingOrgan ?? ''}${doc.issuingState != null ? '/${doc.issuingState}' : ''}'.trim();
     _nationalityController.text = doc.nationality ?? '';
     _expiryController.text = doc.expiryDate ?? '';
@@ -896,8 +892,8 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
                       ),
                       const SizedBox(height: 12),
                       TextField(
-                        controller: _motherController,
-                        decoration: const InputDecoration(labelText: 'Nome da Mãe (Filiação)', prefixIcon: Icon(Icons.family_restroom)),
+                        controller: _userIdController,
+                        decoration: const InputDecoration(labelText: 'ID Único do Usuário', prefixIcon: Icon(Icons.fingerprint)),
                       ),
                       if (doc.documentType == 'cnh') ...[
                         const SizedBox(height: 12),
@@ -966,7 +962,7 @@ class _ScannerDashboardScreenState extends ConsumerState<ScannerDashboardScreen>
                           documentNumber: _docNumberController.text.trim(),
                           cpf: _cpfController.text.trim(),
                           birthDate: _birthDateController.text.trim(),
-                          motherName: _motherController.text.trim(),
+                          userId: _userIdController.text.trim(),
                           issuingOrgan: _organController.text.trim(),
                           cnhCategory: _cnhCatController.text.trim(),
                           cnhRenach: _cnhRenachController.text.trim(),

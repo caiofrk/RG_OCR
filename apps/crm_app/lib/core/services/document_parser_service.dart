@@ -396,20 +396,7 @@ class DocumentParserService {
       fullName = fullName.replaceAll(RegExp(r'[0-9<>/\\_]'), '').trim();
     }
 
-    // Mother Name
-    String? motherName;
-    for (var i = 0; i < lines.length; i++) {
-      final lineNorm = normalizeAccents(lines[i]);
-      if (lineNorm.contains('FILIACAO') || lineNorm.contains('MAE') || lineNorm.contains('PAI')) {
-        for (var j = i + 1; j < lines.length && j < i + 5; j++) {
-          if (_isValidPersonName(lines[j])) {
-            motherName = lines[j].trim();
-            break;
-          }
-        }
-        break;
-      }
-    }
+    // User ID generation could go here if we had crypto imported
 
     return {
       'document_type': 'cnh',
@@ -418,7 +405,6 @@ class DocumentParserService {
       'cpf_valid': cpfResult.isValid,
       'full_name': fullName,
       'birth_date': birthDate,
-      'mother_name': motherName,
       'issuing_organ': 'DETRAN',
       'cnh_category': category,
       'cnh_renach': renach,
@@ -471,8 +457,6 @@ class DocumentParserService {
 
     // Name Extraction
     String? fullName;
-    String? motherName;
-    String? fatherName; // Hard to extract reliably without full NLP, but we try
     final lines = rawText.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).toList();
 
     for (var i = 0; i < lines.length; i++) {
@@ -498,27 +482,7 @@ class DocumentParserService {
       }
     }
 
-    // Mother Name
-    for (var i = 0; i < lines.length; i++) {
-      final lNorm = normalizeAccents(lines[i]);
-      if (lNorm.contains('FILIACAO') || lNorm.contains('MAE') || lNorm.contains('PAI')) {
-        // Look ahead for mother (usually first valid name)
-        for (var j = i + 1; j < lines.length && j < i + 5; j++) {
-          if (_isValidPersonName(lines[j])) {
-            motherName = lines[j].trim();
-            break;
-          }
-        }
-        // Look ahead for father (usually second valid name)
-        for (var j = i + 1; j < lines.length && j < i + 5; j++) {
-          if (_isValidPersonName(lines[j]) && lines[j].trim() != motherName) {
-            fatherName = lines[j].trim();
-            break;
-          }
-        }
-        break;
-      }
-    }
+    // User ID generation could go here if we had crypto imported
 
     return {
       'document_type': isCin ? 'cin' : 'rg',
@@ -527,8 +491,6 @@ class DocumentParserService {
       'cpf_valid': cpfResult.isValid,
       'full_name': fullName,
       'birth_date': birthDate,
-      'mother_name': motherName,
-      'father_name': fatherName,
       'issuing_organ': issuingOrgan ?? 'SSP',
       'issuing_state': issuingState,
       'issuing_date': issuingDate,

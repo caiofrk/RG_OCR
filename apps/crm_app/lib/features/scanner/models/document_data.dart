@@ -10,8 +10,7 @@ class ScannedDocumentData {
   final String? surname;
   final String? givenNames;
   final String? birthDate;
-  final String? motherName;
-  final String? fatherName;
+  final String? userId;
   final String? naturalness;
   final String? nationality;
   final String? gender;
@@ -42,8 +41,7 @@ class ScannedDocumentData {
     this.surname,
     this.givenNames,
     this.birthDate,
-    this.motherName,
-    this.fatherName,
+    this.userId,
     this.naturalness,
     this.nationality,
     this.gender,
@@ -72,8 +70,7 @@ class ScannedDocumentData {
       surname: json['surname'] as String?,
       givenNames: json['given_names'] as String?,
       birthDate: json['birth_date'] as String?,
-      motherName: json['mother_name'] as String?,
-      fatherName: json['father_name'] as String?,
+      userId: json['user_id'] as String?,
       naturalness: json['naturalness'] as String?,
       nationality: json['nationality'] as String?,
       gender: json['gender'] as String?,
@@ -105,8 +102,7 @@ class ScannedDocumentData {
       'surname': surname,
       'given_names': givenNames,
       'birth_date': birthDate,
-      'mother_name': motherName,
-      'father_name': fatherName,
+      'user_id': userId,
       'naturalness': naturalness,
       'nationality': nationality,
       'gender': gender,
@@ -159,8 +155,7 @@ class ScannedDocumentData {
     String? surname,
     String? givenNames,
     String? birthDate,
-    String? motherName,
-    String? fatherName,
+    String? userId,
     String? naturalness,
     String? nationality,
     String? gender,
@@ -187,8 +182,7 @@ class ScannedDocumentData {
       surname: surname ?? this.surname,
       givenNames: givenNames ?? this.givenNames,
       birthDate: birthDate ?? this.birthDate,
-      motherName: motherName ?? this.motherName,
-      fatherName: fatherName ?? this.fatherName,
+      userId: userId ?? this.userId,
       naturalness: naturalness ?? this.naturalness,
       nationality: nationality ?? this.nationality,
       gender: gender ?? this.gender,
