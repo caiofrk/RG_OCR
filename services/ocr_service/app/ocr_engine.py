@@ -68,11 +68,14 @@ class OCREngine:
                     text = "\n".join(lines)
                     text_upper = text.upper()
                     
+                    char_count = len(text.replace(" ", "").replace("\n", ""))
+                    
                     # Stop early if we find at least 2 strong anchors indicating correct orientation
                     if sum(anchor in text_upper for anchor in anchors) >= 2:
-                        return text
+                        best_text = text
+                        best_char_count = char_count
+                        break
                         
-                    char_count = len(text.replace(" ", "").replace("\n", ""))
                     if char_count > best_char_count:
                         best_char_count = char_count
                         best_text = text
@@ -84,6 +87,19 @@ class OCREngine:
                 current_img = cv2.rotate(current_img, cv2.ROTATE_90_CLOCKWISE)
                 
             if best_text.strip():
+                # --- TARGETED CNH CROP PASS ---
+                # The CNH category and dates are always in the bottom right quadrant.
+                # If they are faint (e.g. red ink), full-image downscaling makes EasyOCR miss them.
+                # Cropping that quadrant preserves resolution for a second pass.
+                try:
+                    h, w = current_img.shape[:2]
+                    crop = current_img[int(h*0.5):h, int(w*0.4):w]
+                    crop_lines = reader.readtext(crop, detail=0, paragraph=False)
+                    if crop_lines:
+                        best_text += "\n--- TARGETED CROP ---\n" + "\n".join(crop_lines)
+                except Exception as e:
+                    print(f"[!] Crop pass failed: {e}")
+
                 return best_text
 
         # 2. Secondary Engine: Tesseract (Fallback if EasyOCR is completely broken/unavailable)

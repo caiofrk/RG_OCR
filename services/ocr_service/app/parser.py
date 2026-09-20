@@ -173,26 +173,32 @@ class MultiDocumentParser:
     def extract_cnh_fields(cls, text: str) -> Dict[str, Optional[str]]:
         norm_text = cls.normalize_accents(text)
         
+        # OCR Typo Correction for Categories
+        def _correct_category(cat: str) -> str:
+            cat = cat.upper()
+            return cat.replace("2B", "AB").replace("4B", "AB").replace("0", "D").replace("8", "B")
+
         # Anchored Category
         category = None
-        cat_match = re.search(r"(?:CATEGORIA|CAT\.?\s*HAB\.?|CAT|CI\s*HAB).*?\b([A-E]{1,2}|ACC)\b", norm_text)
+        cat_match = re.search(r"(?:CATEGORIA|CAT\.?\s*HAB\.?|CAT|CI\s*HAB).*?\b([A-E]{1,2}|ACC|2B|4B)\b", norm_text, re.IGNORECASE)
         if cat_match:
-            category = cat_match.group(1).strip()
+            category = _correct_category(cat_match.group(1).upper())
         else:
             # Fallback: look for isolated valid category on a short line (OCR might miss "CAT. HAB.")
             lines = [l.strip() for l in text.splitlines() if l.strip()]
             valid_cats = ["A", "B", "AB", "C", "D", "E"]
             for i, l in enumerate(lines):
                 l_norm = cls.normalize_accents(l)
-                if l_norm in valid_cats:
-                    category = l_norm
+                if l_norm in valid_cats or _correct_category(l_norm) in valid_cats:
+                    category = _correct_category(l_norm)
                     break
                 # Special fallback for old CNH: check if "PERMISSAO", "ACC", or "CI HAB" are nearby
                 if "PERMISSAO" in l_norm or "ACC" in l_norm or "CI HAB" in l_norm:
-                    # check next few lines for A, B, AB, ACC
+                    # check next few lines for A, B, AB
                     for j in range(i, min(i + 4, len(lines))):
-                        if lines[j].strip().upper() in valid_cats:
-                            category = lines[j].strip().upper()
+                        corrected_line = _correct_category(lines[j].strip().upper())
+                        if corrected_line in valid_cats:
+                            category = corrected_line
                             break
                     if category:
                         break
