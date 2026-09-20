@@ -181,7 +181,7 @@ class MultiDocumentParser:
         else:
             # Fallback: look for isolated valid category on a short line (OCR might miss "CAT. HAB.")
             lines = [l.strip() for l in text.splitlines() if l.strip()]
-            valid_cats = ["A", "B", "AB", "C", "D", "E", "ACC"]
+            valid_cats = ["A", "B", "AB", "C", "D", "E"]
             for i, l in enumerate(lines):
                 l_norm = cls.normalize_accents(l)
                 if l_norm in valid_cats:

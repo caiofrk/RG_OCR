@@ -1,5 +1,6 @@
 import io
 import shutil
+import cv2
 import pymupdf as fitz  # PyMuPDF
 from PIL import Image
 from .preprocessing import ImagePreprocessor
